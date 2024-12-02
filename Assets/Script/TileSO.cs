@@ -6,8 +6,8 @@ using UnityEngine.Tilemaps;
 public class TileSO : ScriptableObject
 {
     public Tile tile;
-    public List<Tile> possibleTilesNorth;
-    public List<Tile> possibleTilesSouth;
-    public List<Tile> possibleTilesEast;
-    public List<Tile> possibleTilesWest;
+    public List<TileSO> possibleTilesNorth;
+    public List<TileSO> possibleTilesSouth;
+    public List<TileSO> possibleTilesEast;
+    public List<TileSO> possibleTilesWest;
 }
