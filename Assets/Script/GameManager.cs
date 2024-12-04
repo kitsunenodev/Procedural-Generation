@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
@@ -225,46 +224,6 @@ public class GameManager : MonoBehaviour
         return possibleTiles;
     }
 
-    public void UpdatesAllNeighborTiles(Vector3Int position)
-    {
-        _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
-        if (position.x > 0)
-        {
-            if (!_alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
-            {
-                _map[position.x -1,position.y].UpdatePossibility(GetPossibleTiles(new Vector3Int(position.x -1, position.y)));
-                UpdatesAllNeighborTiles(new Vector3Int(position.x - 1, position.y));
-            }
-            
-        }
-        if (position.x < mapSize -1)
-        {
-            if (!_alreadyUpdatedTiles.Contains(_map[position.x +1,position.y]))
-            {
-                _map[position.x + 1,position.y].UpdatePossibility(GetPossibleTiles(new Vector3Int(position.x +1, position.y)));
-                UpdatesAllNeighborTiles(new Vector3Int(position.x + 1, position.y));
-                
-            }
-        }
-        if (position.y > 0)
-        {
-            if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y - 1]))
-            {
-                _map[position.x,position.y-1].UpdatePossibility(GetPossibleTiles(new Vector3Int(position.x, position.y -1)));
-                UpdatesAllNeighborTiles(new Vector3Int(position.x , position.y - 1));
-                
-            }
-        }
-        if (position.y < mapSize -1)
-        {
-            if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y+1]))
-            {
-                _map[position.x,position.y +1].UpdatePossibility(GetPossibleTiles(new Vector3Int(position.x, position.y+1)));
-                UpdatesAllNeighborTiles(new Vector3Int(position.x , position.y+1));
-            }
-        }
-    }
-
     public void ListEntropy()
     {
         Vector3Int position = new Vector3Int(0, 0);
@@ -358,9 +317,7 @@ public class GameManager : MonoBehaviour
 
     public void SetCell(Vector3Int position, TileSO tile)
     {
-        _alreadySetTiles.Clear();
-        _alreadyUpdatedTiles.Clear();
-        _revisedTiles.Clear();
+        ResetMap();
         _map[position.x, position.y].UpdatePossibility(tile);
         UpdateNeighborPossibilities(position);
         CheckTiles();
@@ -376,6 +333,19 @@ public class GameManager : MonoBehaviour
         
     }
 
+    public void ResetMap()
+    {
+        for (int y = 0; y < mapSize; y++)
+        {
+            for (int x = 0; x < mapSize; x++)
+            {
+                _map[x,y].ResetPossibilities();
+            }
+        }
+        _alreadySetTiles.Clear();
+        _alreadyUpdatedTiles.Clear();
+        _revisedTiles.Clear();
+    }
     private void UpdateNeighborPossibilities(Vector3Int position)
     {
         if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y]))
@@ -392,7 +362,6 @@ public class GameManager : MonoBehaviour
         {
             if (!_alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
             {
-                _map[position.x - 1, position.y].ResetPossibilities();
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x -1, position.y));
                 if (possibilities.Count < 1)
                 {
@@ -410,7 +379,6 @@ public class GameManager : MonoBehaviour
         {
             if (!_alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
             {
-                _map[position.x + 1, position.y].ResetPossibilities();
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
                 
                 if (possibilities.Count < 1)
@@ -427,7 +395,6 @@ public class GameManager : MonoBehaviour
         {
             if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y - 1]))
             { 
-                _map[position.x, position.y -1].ResetPossibilities();
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y - 1));
         
                 if (possibilities.Count < 1)
@@ -444,7 +411,6 @@ public class GameManager : MonoBehaviour
         {
             if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y+1]))
             {
-                _map[position.x, position.y+1].ResetPossibilities();
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x , position.y+1));
               
                 if (possibilities.Count < 1)

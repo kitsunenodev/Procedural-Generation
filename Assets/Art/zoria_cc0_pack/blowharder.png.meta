@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      blowharder_0: -4583653155633143501
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
