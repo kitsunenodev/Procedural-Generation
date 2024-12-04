@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class SuperpositionTile
 {
-    public readonly List<TileSO> _possibilities;
+    public readonly List<TileSO> Possibilities;
     public readonly List<TileSO> NorthPossibilities = new List<TileSO>();
     public readonly List<TileSO> SouthPossibilities = new List<TileSO>();
     public readonly List<TileSO> EastPossibilities = new List<TileSO>();
@@ -12,14 +13,14 @@ public class SuperpositionTile
 
     public SuperpositionTile()
     {
-        _possibilities = new List<TileSO>(GameManager.Instance.gameTiles);
+        Possibilities = new List<TileSO>(GameManager.Instance.gameTiles);
         UpdateAdjacentPossibilities();
     }
 
     public void UpdateAdjacentPossibilities()
     {
         ClearAdjacentPossibilities();
-        foreach (var tile in _possibilities)
+        foreach (var tile in Possibilities)
         {
             foreach (var tilePossible in tile.possibleTilesNorth)
             {
@@ -66,39 +67,44 @@ public class SuperpositionTile
         {
             if (!possibleTiles.Contains(tile))
             {
-                _possibilities.Remove(tile);
+                Possibilities.Remove(tile);
             }
         }
         UpdateAdjacentPossibilities();
-        if (_possibilities.Count < 2)
-        {
-            IsSet = true;
-        }
+        IsSet = Possibilities.Count < 2;
         
     }
     
     public void UpdatePossibility(TileSO possibleTile)
     {
-        _possibilities.Clear();
-        _possibilities.Add(possibleTile);
+        Possibilities.Clear();
+        Possibilities.Add(possibleTile);
         UpdateAdjacentPossibilities();
         IsSet = true;
     }
 
     public int GetEntropy()
     {
-        return _possibilities.Count;
+        return Possibilities.Count;
     }
 
     public void SelectRandomPossibleCell()
     {
-        int random = Random.Range(0, _possibilities.Count - 1);
-        UpdatePossibility(_possibilities[random]);
+        int random = Random.Range(0, Possibilities.Count - 1);
+        UpdatePossibility(Possibilities[random]);
     }
+
+    public void ResetPossibilities()
+    {
+        Possibilities.Clear();
+        Possibilities.AddRange(GameManager.Instance.gameTiles);
+    }
+    
+    
 
     public TileSO GetTile()
     {
-        return IsSet ? _possibilities[0] : null;
+        return IsSet ? Possibilities[0] : null;
     }
     
 }

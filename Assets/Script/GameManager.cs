@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
@@ -16,6 +17,8 @@ public class GameManager : MonoBehaviour
     public Dictionary<Vector3Int, int> Entropies = new Dictionary<Vector3Int, int>();
     private readonly List<SuperpositionTile> _alreadyUpdatedTiles = new List<SuperpositionTile>();
     private readonly List<SuperpositionTile> _alreadySetTiles = new List<SuperpositionTile>();
+    private readonly List<SuperpositionTile> _revisedTiles = new List<SuperpositionTile>();
+    
     public List<Vector3Int> lowestEntropyTilePositions = new List<Vector3Int>();
 
     private SuperpositionTile[,] _map;
@@ -37,12 +40,13 @@ public class GameManager : MonoBehaviour
         _map = new SuperpositionTile[mapSize, mapSize];
         _alreadyUpdatedTiles.Clear();
         _alreadySetTiles.Clear();
+        _revisedTiles.Clear();
     }
 
     private void Start()
     {
         
-        GenerateRandomMapFromCell();
+        GenerateRandomMap();
         
     }
 
@@ -57,9 +61,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void GenerateRandomMapFromCell()
+    void GenerateRandomMap()
     {
         ClearMap();
+        _alreadySetTiles.Clear();
+        _revisedTiles.Clear();
         int x = Random.Range(0, mapSize - 1);
         int y = Random.Range(0, mapSize - 1);
         GenerateCell(new Vector3Int(x,y));
@@ -68,9 +74,10 @@ public class GameManager : MonoBehaviour
     void GenerateCell(Vector3Int position)
     {
         _alreadyUpdatedTiles.Clear();
+        _revisedTiles.Clear();
         _alreadyUpdatedTiles.AddRange(_alreadySetTiles);
         GenerateTile(position);
-        UpdatesAllNeighborTiles(position);
+        UpdateNeighborPossibilities(position);
         CheckTiles();
         ListEntropy();
         GetLowestEntropyCells();
@@ -90,16 +97,9 @@ public class GameManager : MonoBehaviour
     //Return the list off all the tile that can assemble with the tiles of the neighbors;
     List<TileSO> GetPossibleTiles(Vector3Int position)
     {
-        int possibilitiesCount = _map[position.x, position.y].GetEntropy();
         List<TileSO> possibleTiles = new List<TileSO>();
         possibleTiles.Clear();
         possibleTiles.AddRange(gameTiles);
-        if (possibilitiesCount == 1)
-        {
-            _alreadySetTiles.Add(_map[position.x, position.y]);
-            _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
-            return _map[position.x, position.y]._possibilities;
-        }
         if (position.x < mapSize-1)
         {
             foreach (var tile in gameTiles)
@@ -149,6 +149,78 @@ public class GameManager : MonoBehaviour
         {
             _alreadySetTiles.Add(_map[position.x, position.y]);
             _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
+        }
+        return possibleTiles;
+    }
+    
+    List<TileSO> GetPossibleTilesFromModifiedTiles(Vector3Int position)
+    {
+        List<TileSO> possibleTiles = new List<TileSO>();
+        possibleTiles.AddRange(gameTiles);
+        
+        if (position.x < mapSize-1)
+        {
+            if (_revisedTiles.Contains(_map[position.x + 1, position.y]))
+            {
+                foreach (var tile in gameTiles)
+                { 
+                    if (!_map[position.x+1, position.y].WestPossibilities.Contains(tile))
+                    {
+                        
+                        possibleTiles.Remove(tile);
+                    }
+                }
+            }
+           
+        }
+        if (position.x > 0)
+        {
+            if (_revisedTiles.Contains(_map[position.x - 1, position.y]))
+            {
+                
+                foreach (var tile in gameTiles)
+                {
+                    if (!_map[position.x-1, position.y].EastPossibilities.Contains(tile))
+                    {
+                        possibleTiles.Remove(tile);
+                    }
+                }
+            }
+            
+        }
+
+        if (position.y < mapSize-1)
+        {
+            if (_revisedTiles.Contains(_map[position.x, position.y+1]))
+            {
+                foreach (var tile in gameTiles)
+                {
+                    if (!_map[position.x, position.y + 1].SouthPossibilities.Contains(tile))
+                    {
+                        possibleTiles.Remove(tile);
+                    }
+                }
+            }
+            
+        }
+
+        if (position.y > 0)
+        {
+            if (_revisedTiles.Contains(_map[position.x, position.y-1]))
+            {
+                foreach (var tile in gameTiles)
+                {
+                    if (!_map[position.x, position.y - 1].NorthPossibilities.Contains(tile))
+                    {
+                        possibleTiles.Remove(tile);
+                    }
+                }
+            }
+        }
+
+        if (possibleTiles.Count == 1)
+        {
+            _alreadySetTiles.Add(_map[position.x, position.y]);
         }
         return possibleTiles;
     }
@@ -216,7 +288,7 @@ public class GameManager : MonoBehaviour
             for (int x = 0; x < mapSize; x++)
             {
                 position.x = x;
-                if (_map[x,y].IsSet   && displayMap.GetTile(new Vector3Int(position.x, position.y, 0)) == null)
+                if (_map[x,y].IsSet)
                 {
                     displayMap.SetTile(new Vector3Int(position.x, position.y, 0), _map[x,y].GetTile().tile);
                 }
@@ -264,21 +336,129 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Vector3 position = Input.mousePosition;
+            Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPosition = grid.WorldToCell(position);
-            _map[cellPosition.x, cellPosition.y].UpdatePossibility(gameTiles[0]);
+            if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
+            {
+                SetCell(cellPosition,gameTiles[0]);
+            }
+            
         }
 
         if (Input.GetMouseButtonDown(1))
         {
-            Vector3 position = Input.mousePosition;
+            Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPosition = grid.WorldToCell(position);
-            _map[cellPosition.x, cellPosition.y].UpdatePossibility(gameTiles[1]);
+            if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
+            {
+                SetCell(cellPosition,gameTiles[1]);
+            }
         }
     }
 
     public void SetCell(Vector3Int position, TileSO tile)
     {
+        _alreadySetTiles.Clear();
+        _alreadyUpdatedTiles.Clear();
+        _revisedTiles.Clear();
+        _map[position.x, position.y].UpdatePossibility(tile);
+        UpdateNeighborPossibilities(position);
+        CheckTiles();
+        ListEntropy();
+        GetLowestEntropyCells();
+        CheckIfMapSet();
+        if (!allTileSet)
+        {
+            int random = Random.Range(0, lowestEntropyTilePositions.Count -1);
+            GenerateCell(lowestEntropyTilePositions[random]);
+        }
+        
         
     }
+
+    private void UpdateNeighborPossibilities(Vector3Int position)
+    {
+        if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y]))
+        {
+            _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
+        }
+
+        if (!_revisedTiles.Contains(_map[position.x, position.y]))
+        {
+            _revisedTiles.Add(_map[position.x, position.y]);
+        }
+        
+        if (position.x > 0)
+        {
+            if (!_alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
+            {
+                _map[position.x - 1, position.y].ResetPossibilities();
+                List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x -1, position.y));
+                if (possibilities.Count < 1)
+                {
+                    
+                    possibilities =
+                        GetPossibleTilesFromModifiedTiles(new Vector3Int(position.x - 1, position.y));
+                }
+                
+                _map[position.x -1,position.y].UpdatePossibility(possibilities);
+                UpdateNeighborPossibilities(new Vector3Int(position.x -1, position.y));
+            }
+            
+        }
+        if (position.x < mapSize -1)
+        {
+            if (!_alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
+            {
+                _map[position.x + 1, position.y].ResetPossibilities();
+                List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
+                
+                if (possibilities.Count < 1)
+                {
+                    
+                    possibilities =
+                        GetPossibleTilesFromModifiedTiles(new Vector3Int(position.x + 1, position.y));
+                }
+                _map[position.x +1,position.y].UpdatePossibility(possibilities);
+                UpdateNeighborPossibilities(new Vector3Int(position.x +1, position.y));
+            }
+        }
+        if (position.y > 0)
+        {
+            if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y - 1]))
+            { 
+                _map[position.x, position.y -1].ResetPossibilities();
+                List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y - 1));
+        
+                if (possibilities.Count < 1)
+                {
+                    
+                    possibilities =
+                        GetPossibleTilesFromModifiedTiles(new Vector3Int(position.x, position.y -1));
+                }
+                _map[position.x,position.y-1].UpdatePossibility(possibilities);
+                UpdateNeighborPossibilities(new Vector3Int(position.x, position.y -1));
+            }
+        }
+        if (position.y < mapSize -1)
+        {
+            if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y+1]))
+            {
+                _map[position.x, position.y+1].ResetPossibilities();
+                List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x , position.y+1));
+              
+                if (possibilities.Count < 1)
+                {
+                    
+                    possibilities =
+                        GetPossibleTilesFromModifiedTiles(new Vector3Int(position.x, position.y+1));
+                }
+                _map[position.x,position.y+1].UpdatePossibility(possibilities);
+                UpdateNeighborPossibilities(new Vector3Int(position.x, position.y+1));
+            }
+        }
+        
+    }
+
+    
 }

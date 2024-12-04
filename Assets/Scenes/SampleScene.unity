@@ -378,7 +378,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bdc46ff8faa7bb642a0dd4b12bb15516, type: 2}
   - {fileID: 11400000, guid: ab78b9dc38a33b647b2d049aa187bcc3, type: 2}
   - {fileID: 11400000, guid: 5e94db51f744f024fa0331def3de070a, type: 2}
-  mapSize: 9
+  mapSize: 10
   lowestEntropyTilePositions: []
   allTileSet: 0
   grid: {fileID: 1801911546}
