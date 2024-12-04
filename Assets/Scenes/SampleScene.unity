@@ -365,6 +365,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameTiles:
   - {fileID: 11400000, guid: 4b7ab2bfa5add20489c361355b4f1801, type: 2}
+  - {fileID: 11400000, guid: 5caa1981e31bcc14487201edec09b099, type: 2}
   - {fileID: 11400000, guid: f63844630011b224ea33bda594f5cc35, type: 2}
   - {fileID: 11400000, guid: 363b2c41b2571a340a1f109da786883b, type: 2}
   - {fileID: 11400000, guid: 071210e10818b9a4a81b87825c39ab61, type: 2}
@@ -373,8 +374,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6bd74948ee122f2428aec02560dddb3e, type: 2}
   - {fileID: 11400000, guid: 8dade7b19ee9adb42b34d081e5962137, type: 2}
   - {fileID: 11400000, guid: 30360f01fd5425d479bac320ac6d9275, type: 2}
-  - {fileID: 11400000, guid: 5caa1981e31bcc14487201edec09b099, type: 2}
-  map: {fileID: 998310558}
+  - {fileID: 11400000, guid: d2be64ec3db264241954416a45f3ffbc, type: 2}
+  - {fileID: 11400000, guid: bdc46ff8faa7bb642a0dd4b12bb15516, type: 2}
+  - {fileID: 11400000, guid: ab78b9dc38a33b647b2d049aa187bcc3, type: 2}
+  - {fileID: 11400000, guid: 5e94db51f744f024fa0331def3de070a, type: 2}
+  mapSize: 9
+  lowestEntropyTilePositions: []
+  allTileSet: 0
+  grid: {fileID: 1801911546}
+  displayMap: {fileID: 998310558}
 --- !u!4 &1059396169
 Transform:
   m_ObjectHideFlags: 0
@@ -428,8 +436,8 @@ Transform:
   m_GameObject: {fileID: 1801911545}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_LocalPosition: {x: -6.4, y: -3.84, z: 0}
+  m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 998310556}

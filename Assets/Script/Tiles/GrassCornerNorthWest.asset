@@ -15,9 +15,19 @@ MonoBehaviour:
   tile: {fileID: 11400000, guid: a534253a911db664591cfe3655edcdf8, type: 2}
   possibleTilesNorth:
   - {fileID: 11400000, guid: 4b7ab2bfa5add20489c361355b4f1801, type: 2}
+  - {fileID: 11400000, guid: 8dade7b19ee9adb42b34d081e5962137, type: 2}
+  - {fileID: 11400000, guid: 071210e10818b9a4a81b87825c39ab61, type: 2}
+  - {fileID: 11400000, guid: 0f5843e78af56fa4dacb239d9e43dd2e, type: 2}
   possibleTilesSouth:
   - {fileID: 11400000, guid: 30360f01fd5425d479bac320ac6d9275, type: 2}
+  - {fileID: 11400000, guid: 0f5843e78af56fa4dacb239d9e43dd2e, type: 2}
+  - {fileID: 11400000, guid: ab78b9dc38a33b647b2d049aa187bcc3, type: 2}
   possibleTilesEast:
   - {fileID: 11400000, guid: 6bd74948ee122f2428aec02560dddb3e, type: 2}
+  - {fileID: 11400000, guid: f63844630011b224ea33bda594f5cc35, type: 2}
+  - {fileID: 11400000, guid: bdc46ff8faa7bb642a0dd4b12bb15516, type: 2}
   possibleTilesWest:
   - {fileID: 11400000, guid: 4b7ab2bfa5add20489c361355b4f1801, type: 2}
+  - {fileID: 11400000, guid: caf7e5730bfe1fb4f9f75afb5e2d1a3a, type: 2}
+  - {fileID: 11400000, guid: f63844630011b224ea33bda594f5cc35, type: 2}
+  - {fileID: 11400000, guid: 071210e10818b9a4a81b87825c39ab61, type: 2}
