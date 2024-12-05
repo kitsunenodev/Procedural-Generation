@@ -71,7 +71,7 @@ public class SuperpositionTile
             }
         }
         UpdateAdjacentPossibilities();
-        IsSet = Possibilities.Count < 2;
+        IsSet = Possibilities.Count == 1;
         
     }
     
@@ -98,10 +98,9 @@ public class SuperpositionTile
     {
         Possibilities.Clear();
         Possibilities.AddRange(GameManager.Instance.gameTiles);
+        UpdateAdjacentPossibilities();
+        IsSet = false;
     }
-    
-    
-
     public TileSO GetTile()
     {
         return IsSet ? Possibilities[0] : null;
