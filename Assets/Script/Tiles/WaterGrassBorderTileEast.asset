@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 30360f01fd5425d479bac320ac6d9275, type: 2}
   - {fileID: 11400000, guid: 0f5843e78af56fa4dacb239d9e43dd2e, type: 2}
   - {fileID: 11400000, guid: 363b2c41b2571a340a1f109da786883b, type: 2}
+  - {fileID: 11400000, guid: 08eb09552aa25c348bbaf03e897e9d04, type: 2}
   possibleTilesWest:
   - {fileID: 11400000, guid: 5caa1981e31bcc14487201edec09b099, type: 2}
   - {fileID: 11400000, guid: 30360f01fd5425d479bac320ac6d9275, type: 2}
