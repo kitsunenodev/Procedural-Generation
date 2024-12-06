@@ -1,26 +1,26 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class SuperpositionTile
 {
-    public readonly List<TileSO> Possibilities;
+    private readonly List<TileSO> _possibilities;
     public readonly List<TileSO> NorthPossibilities = new List<TileSO>();
     public readonly List<TileSO> SouthPossibilities = new List<TileSO>();
     public readonly List<TileSO> EastPossibilities = new List<TileSO>();
     public readonly List<TileSO> WestPossibilities = new List<TileSO>();
     public bool IsSet;
 
+    
     public SuperpositionTile()
     {
-        Possibilities = new List<TileSO>(GameManager.Instance.gameTiles);
+        _possibilities = new List<TileSO>(GameManager.Instance.gameTiles);
         UpdateAdjacentPossibilities();
     }
 
-    public void UpdateAdjacentPossibilities()
+    private void UpdateAdjacentPossibilities()
     {
         ClearAdjacentPossibilities();
-        foreach (var tile in Possibilities)
+        foreach (var tile in _possibilities)
         {
             foreach (var tilePossible in tile.possibleTilesNorth)
             {
@@ -53,7 +53,7 @@ public class SuperpositionTile
         }
     }
 
-    public void ClearAdjacentPossibilities()
+    private void ClearAdjacentPossibilities()
     {
         NorthPossibilities.Clear();
         SouthPossibilities.Clear();
@@ -67,43 +67,43 @@ public class SuperpositionTile
         {
             if (!possibleTiles.Contains(tile))
             {
-                Possibilities.Remove(tile);
+                _possibilities.Remove(tile);
             }
         }
         UpdateAdjacentPossibilities();
-        IsSet = Possibilities.Count == 1;
+        IsSet = _possibilities.Count == 1;
         
     }
     
     public void UpdatePossibility(TileSO possibleTile)
     {
-        Possibilities.Clear();
-        Possibilities.Add(possibleTile);
+        _possibilities.Clear();
+        _possibilities.Add(possibleTile);
         UpdateAdjacentPossibilities();
         IsSet = true;
     }
 
     public int GetEntropy()
     {
-        return Possibilities.Count;
+        return _possibilities.Count;
     }
 
     public void SelectRandomPossibleCell()
     {
-        int random = Random.Range(0, Possibilities.Count - 1);
-        UpdatePossibility(Possibilities[random]);
+        int random = Random.Range(0, _possibilities.Count - 1);
+        UpdatePossibility(_possibilities[random]);
     }
 
     public void ResetPossibilities()
     {
-        Possibilities.Clear();
-        Possibilities.AddRange(GameManager.Instance.gameTiles);
+        _possibilities.Clear();
+        _possibilities.AddRange(GameManager.Instance.gameTiles);
         UpdateAdjacentPossibilities();
         IsSet = false;
     }
     public TileSO GetTile()
     {
-        return IsSet ? Possibilities[0] : null;
+        return IsSet ? _possibilities[0] : null;
     }
     
 }
