@@ -6,24 +6,31 @@ using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
-    
+    //List of all the possible tiles
     public List<TileSO> gameTiles;
 
     public static GameManager Instance;
 
+    //Size of the map
     public int mapSize = 1;
 
+    //Dictionary of the umber of possibility for each cell
     public Dictionary<Vector3Int, int> Entropies = new Dictionary<Vector3Int, int>();
-    private readonly List<SuperpositionTile> _alreadyUpdatedTiles = new List<SuperpositionTile>();
-    private readonly List<SuperpositionTile> _alreadySetTiles = new List<SuperpositionTile>();
-    // private readonly List<SuperpositionTile> _revisedTiles = new List<SuperpositionTile>();
     
+    //Tile that have already been Updated
+    private readonly List<SuperpositionTile> _alreadyUpdatedTiles = new List<SuperpositionTile>();
+    
+    //Tile that are already that to one possibility
+    private readonly List<SuperpositionTile> _alreadySetTiles = new List<SuperpositionTile>();
+    
+    //List of the cell with the least possibilities
     public List<Vector3Int> lowestEntropyTilePositions = new List<Vector3Int>();
 
+    //2 dimensional array to stock all the cells 
     private SuperpositionTile[,] _map;
-
+    
     public bool allTileSet;
-
+    
     public Grid grid;
     public Tilemap displayMap;
 
@@ -73,19 +80,35 @@ public class GameManager : MonoBehaviour
     }
 
     
-    // Generate a tile at the given position
+    // Generate a tile at the given position and update the map
     void GenerateCell(Vector3Int position)
     {
         _alreadyUpdatedTiles.Clear();
+        
+        //Prevent the set tile to be updated
         _alreadyUpdatedTiles.AddRange(_alreadySetTiles);
+        
+        //generate a tile
         GenerateTile(position);
+        
+        //Update the neighbors
         UpdateNeighborPossibilities(position);
+
+        //Update the display of the already set tiles
         CheckTiles();
+        
+        //Refresh the number of possibility of all tiles
         ListEntropy();
+        
+        //Refresh the list of the cell with the least possibilities
         GetLowestEntropyCells();
+        
+        //Check if all tiles are set
         CheckIfMapSet();
         if (!allTileSet)
         {
+            
+            //If not select a random tile with the least possibility and set it to a random tile possible
             int random = Random.Range(0, lowestEntropyTilePositions.Count -1);
             GenerateCell(lowestEntropyTilePositions[random]);
         }
