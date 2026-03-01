@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -14,11 +15,17 @@ public class GameManager : MonoBehaviour
     //Size of the map
     public int mapSize = 1;
 
+    private bool _isExpandingMap = false;
+
     //Dictionary of the umber of possibility for each cell
     public Dictionary<Vector3Int, int> Entropies = new Dictionary<Vector3Int, int>();
     
     //Tile that have already been Updated
     private readonly List<SuperpositionTile> _alreadyUpdatedTiles = new List<SuperpositionTile>();
+
+    private readonly List<SuperpositionTile> _TilesToCheck = new List<SuperpositionTile>();
+    private readonly List<SuperpositionTile> _TilesToCheckNext= new List<SuperpositionTile>();
+    
     
     //Tile that are already that to one possibility
     private readonly List<SuperpositionTile> _alreadySetTiles = new List<SuperpositionTile>();
@@ -51,9 +58,32 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        
         GenerateRandomMap();
-        
+    }
+    
+    private void Update()
+    {
+        //Place a grass tile on the map and update the map from it
+        // if (Input.GetMouseButtonDown(0))
+        // {
+        //     Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //     Vector3Int cellPosition = grid.WorldToCell(position);
+        //     if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
+        //     {
+        //         SetCell(cellPosition,gameTiles[0]);
+        //     }
+        // }
+        //
+        // //Place a water tile on the map and update the map from it
+        // if (Input.GetMouseButtonDown(1))
+        // {
+        //     Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //     Vector3Int cellPosition = grid.WorldToCell(position);
+        //     if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
+        //     {
+        //         SetCell(cellPosition,gameTiles[1]);
+        //     }
+        // }
     }
 
     //File all the tiles of the map with new superposition cell that contain all the possibilitiies
@@ -67,51 +97,35 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-
     
     //Select a random place on the tile map, assign it a random tile and complete the map accordingly
     void GenerateRandomMap()
     {
         ClearMap();
         _alreadySetTiles.Clear();
-        int x = Random.Range(0, mapSize - 1);
-        int y = Random.Range(0, mapSize - 1);
-        GenerateCell(new Vector3Int(x,y));
+        GenerateCell(new Vector3Int(Random.Range(0, mapSize - 1),Random.Range(0, mapSize - 1)));
     }
-
     
     // Generate a tile at the given position and update the map
     void GenerateCell(Vector3Int position)
     {
+        if (_alreadySetTiles.Contains(_map[position.x, position.y]))
+        {
+            CheckIfMapSet();
+            if (!allTileSet)
+            {
+                ListEntropy();
+                GetLowestEntropyCells();
+                int random = Random.Range(0, lowestEntropyTilePositions.Count -1);
+                GenerateCell(lowestEntropyTilePositions[random]);
+                return;
+            }
+            return;
+        }
         _alreadyUpdatedTiles.Clear();
-        
-        //Prevent the set tile to be updated
         _alreadyUpdatedTiles.AddRange(_alreadySetTiles);
-        
         //generate a tile
         GenerateTile(position);
-        
-        //Update the neighbors
-        UpdateNeighborPossibilities(position);
-
-        //Update the display of the already set tiles
-        CheckTiles();
-        
-        //Refresh the number of possibility of all tiles
-        ListEntropy();
-        
-        //Refresh the list of the cell with the least possibilities
-        GetLowestEntropyCells();
-        
-        //Check if all tiles are set
-        CheckIfMapSet();
-        if (!allTileSet)
-        {
-            
-            //If not select a random tile with the least possibility and set it to a random tile possible
-            int random = Random.Range(0, lowestEntropyTilePositions.Count -1);
-            GenerateCell(lowestEntropyTilePositions[random]);
-        }
     }
     
     //Select a random tileSO from the possibilities of the cell at the given position and Set the cell to be this tile
@@ -119,6 +133,46 @@ public class GameManager : MonoBehaviour
     {
         _map[position.x, position.y].SelectRandomPossibleCell();
         displayMap.SetTile(new Vector3Int(position.x, position.y,0), _map[position.x, position.y].GetTile().tile);
+        _alreadySetTiles.Add( _map[position.x, position.y]);
+        _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
+        AddNeighborToCheck(position);
+        if(!_isExpandingMap)StartCoroutine(ExpandGeneration());
+    }
+    
+    private void AddNeighborToCheck(Vector3Int position)
+    {
+        if (position.x > 0)
+        {
+            if (!_TilesToCheckNext.Contains(_map[position.x - 1, position.y]) 
+                && _alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
+            {
+                _TilesToCheckNext.Add(_map[position.x - 1, position.y]); 
+            }
+        }
+
+        if (position.x < mapSize - 1)
+        {
+            if (!_TilesToCheckNext.Contains(_map[position.x + 1, position.y])
+                && _alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
+            {
+                _TilesToCheckNext.Add(_map[position.x + 1, position.y]);
+            }
+        }
+
+        if (position.y > 0)
+        {
+            if (!_TilesToCheckNext.Contains(_map[position.x, position.y - 1])
+                && _alreadyUpdatedTiles.Contains(_map[position.x, position.y - 1]))
+            {
+                _TilesToCheckNext.Add(_map[position.x, position.y - 1]);
+            }
+        }
+        if (position.y >= mapSize - 1) return;
+        if (!_TilesToCheckNext.Contains(_map[position.x, position.y + 1])
+            && _alreadyUpdatedTiles.Contains(_map[position.x, position.y + 1]))
+        {
+            _TilesToCheckNext.Add(_map[position.x, position.y + 1]);
+        }
     }
 
     //Return the list off all the tile that can assemble with the tiles of the neighbors;
@@ -181,11 +235,13 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        //if there cna be only one possibility, the tile is Set To be that possibility
+        //if there can be only one possibility, the tile is Set To be that possibility
         if (possibleTiles.Count == 1)
         {
             _alreadySetTiles.Add(_map[position.x, position.y]);
             _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
+            displayMap.SetTile(new Vector3Int(position.x, position.y,0), _map[position.x, position.y].GetTile().tile);
+            
         }
         return possibleTiles;
     }
@@ -261,30 +317,19 @@ public class GameManager : MonoBehaviour
         allTileSet = true;
     }
 
-    private void Update()
+    public bool IsAllTilesUpdated()
     {
-        
-        //Place a grass tile on the map and update the map from it
-        if (Input.GetMouseButtonDown(0))
+        for (int y = 0; y < mapSize; y++)
         {
-            Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3Int cellPosition = grid.WorldToCell(position);
-            if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
+            for (int x = 0; x < mapSize; x++)
             {
-                SetCell(cellPosition,gameTiles[0]);
+                if (!_alreadyUpdatedTiles.Contains(_map[x,y]))
+                {
+                    return false;
+                }
             }
         }
-
-        //Place a water tile on the map and update the map from it
-        if (Input.GetMouseButtonDown(1))
-        {
-            Vector3 position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3Int cellPosition = grid.WorldToCell(position);
-            if (cellPosition.x >= 0 && cellPosition.x < mapSize && cellPosition.y >= 0 && cellPosition.y < mapSize)
-            {
-                SetCell(cellPosition,gameTiles[1]);
-            }
-        }
+        return true;
     }
 
     //Set the cell clicked on to the tile given in parameters and update the neighbors
@@ -322,10 +367,8 @@ public class GameManager : MonoBehaviour
     private void UpdateNeighborPossibilities(Vector3Int position)
     {
         //Add the current tile to the already updated tile to avoid infinite recursion
-        if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y]))
-        {
-            _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
-        }
+        if (_alreadyUpdatedTiles.Contains(_map[position.x, position.y])) return;
+        _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
         
         //if the current cell has a tile on the west
         if (position.x > 0)
@@ -337,7 +380,7 @@ public class GameManager : MonoBehaviour
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x -1, position.y));
                 
                 //Check if there is at least one possible tile the cell can be, if not reset the neighbors
-                if (!CheckCompatibility(new Vector3Int(position.x -1, position.y), possibilities))
+                if (!CheckCompatibility(new Vector3Int(position.x - 1, position.y), possibilities))
                 {
                     //Get all the tile the cell can be after changing the neighbors
                     possibilities = GetPossibleTiles(new Vector3Int(position.x -1, position.y));
@@ -347,7 +390,7 @@ public class GameManager : MonoBehaviour
                 _map[position.x -1,position.y].UpdatePossibility(possibilities);
                 
                 //Update the neighbors of the current cell
-                UpdateNeighborPossibilities(new Vector3Int(position.x -1, position.y));
+                AddNeighborToCheck(new Vector3Int(position.x -1, position.y));
             }
             
         }
@@ -355,31 +398,31 @@ public class GameManager : MonoBehaviour
         //if the current cell has a tile on the East
         if (position.x < mapSize -1)
         {
-            //If the tile on the East has not already been updated
-            if (!_alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
-            {
-                //Get all the tile the cell can be
-                List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
-                
-                //Check if there is at least one possible tile the cell can be, if not reset the neighbors
-                if (!CheckCompatibility(new Vector3Int(position.x +1, position.y), possibilities))
-                {
-                    //Get all the tile the cell can be after changing the neighbors
-                    possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
-                }
-                
-                //Update the possibilities
-                _map[position.x +1,position.y].UpdatePossibility(possibilities);
-                
-                //Update the neighbors of the current cell
-                UpdateNeighborPossibilities(new Vector3Int(position.x +1, position.y));
-            }
+            // If the tile on the East has not already been updated
+             if (!_alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
+             {
+                 //Get all the tile the cell can be
+                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
+                 
+                 //Check if there is at least one possible tile the cell can be, if not reset the neighbors
+                 if (!CheckCompatibility(new Vector3Int(position.x + 1, position.y), possibilities))
+                 {
+                     //Get all the tile the cell can be after changing the neighbors
+                     possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
+                 }
+                 
+                 //Update the possibilities
+                 _map[position.x +1,position.y].UpdatePossibility(possibilities);
+                 
+                 //Update the neighbors of the current cell
+                 AddNeighborToCheck(new Vector3Int(position.x +1, position.y));
+             }
         }
         
         //if the current cell has a tile on the North
         if (position.y > 0)
         {
-            //If the tile on the North has not already been updated
+            // //If the tile on the North has not already been updated
             if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y - 1]))
             { 
                 //Get all the tile the cell can be
@@ -389,28 +432,28 @@ public class GameManager : MonoBehaviour
                 if (!CheckCompatibility(new Vector3Int(position.x, position.y - 1), possibilities))
                 {
                     //Get all the tile the cell can be after changing the neighbors
-                    possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y -1));
+                    possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y -1));  
                 }
                 
                 //Update the possibilities
                 _map[position.x,position.y-1].UpdatePossibility(possibilities);
                 
                 //Update the neighbors of the current cell
-                UpdateNeighborPossibilities(new Vector3Int(position.x, position.y -1));
+                AddNeighborToCheck(new Vector3Int(position.x, position.y -1));
             }
         }
         
         //if the current cell has a tile on the South
         if (position.y < mapSize -1)
         {
-            //If the tile on the South has not already been updated
+            // //If the tile on the South has not already been updated
             if (!_alreadyUpdatedTiles.Contains(_map[position.x,position.y+1]))
             {
                 //Get all the tile the cell can be
                 List<TileSO> possibilities = GetPossibleTiles(new Vector3Int(position.x , position.y+1));
                 
                 //Check if there is at least one possible tile the cell can be, if not reset the neighbors
-                if (!CheckCompatibility(new Vector3Int(position.x, position.y+1), possibilities))
+                if (!CheckCompatibility(new Vector3Int(position.x, position.y + 1), possibilities))
                 {
                     //Get all the tile the cell can be after changing the neighbors
                     possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y+1));
@@ -420,18 +463,16 @@ public class GameManager : MonoBehaviour
                 _map[position.x,position.y+1].UpdatePossibility(possibilities);
                 
                 //Update the neighbors of the current cell
-                UpdateNeighborPossibilities(new Vector3Int(position.x, position.y+1));
+                AddNeighborToCheck(new Vector3Int(position.x, position.y+1));
             }
         }
     }
-
     
     //Reset the possible tiles the cell can be at the given position
     void ResetNeighbor(Vector3Int position)
     {
         _map[position.x, position.y].ResetPossibilities();
     }
-
     
     //Reset all the neighbor of the tile at the given position
     void ResetAllNeighbor(Vector3Int position)
@@ -439,11 +480,11 @@ public class GameManager : MonoBehaviour
         //If the cell has a cell on the West reset the cell on the West
         if (position.x > 0)
         {
+            //We do not reset UpdatedTiles
             if (!_alreadyUpdatedTiles.Contains(_map[position.x -1, position.y]))
             {
                 ResetNeighbor(new Vector3Int(position.x -1, position.y));
             }
-            
         }
         
         //If the cell has a cell on the East reset the cell on the East
@@ -486,6 +527,59 @@ public class GameManager : MonoBehaviour
         }
         return true;
     }
-    
+
+    private IEnumerator ExpandGeneration()
+    {
+        if (_isExpandingMap) yield break;
+        _isExpandingMap = true;
+        while (!allTileSet)
+        {
+            if (_TilesToCheckNext.Count == 0)
+            {
+                CheckIfMapSet();
+                if (allTileSet)
+                {
+                    _isExpandingMap = false;
+                    StopCoroutine(ExpandGeneration());
+                }
+                else
+                {
+                    ListEntropy();
+                    GetLowestEntropyCells();
+                    int random = Random.Range(0, lowestEntropyTilePositions.Count -1);
+                    GenerateCell(lowestEntropyTilePositions[random]);
+                }
+            }
+            else
+            {
+                 if (_TilesToCheck.Count == 0)
+                 {
+                     _TilesToCheck.AddRange(_TilesToCheckNext);
+                     _TilesToCheckNext.Clear();
+                 }
+                 foreach (var tile in _TilesToCheck)
+                 {
+                     UpdateNeighborPossibilities(GetTilePosition(tile));
+                 }
+                 CheckTiles();
+                 _TilesToCheck.Clear();
+            }
+        }
+    }
+
+    private Vector3Int GetTilePosition(SuperpositionTile tile)
+    {
+        for (int i = 0; i < mapSize; i++)
+        {
+            for (int j = 0; j < mapSize; j++)
+            {
+                if (_map[j, i] == tile)
+                {
+                    return new Vector3Int(j, i, 0);
+                }
+            }
+        }
+        return new Vector3Int(-1,-1,-1);
+    }
     
 }
