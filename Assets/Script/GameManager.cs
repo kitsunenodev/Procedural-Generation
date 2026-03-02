@@ -103,7 +103,8 @@ public class GameManager : MonoBehaviour
     {
         ClearMap();
         _alreadySetTiles.Clear();
-        GenerateCell(new Vector3Int(Random.Range(0, mapSize - 1),Random.Range(0, mapSize - 1)));
+        // GenerateCell(new Vector3Int(Random.Range(0, mapSize - 1),Random.Range(0, mapSize - 1)));
+        StartCoroutine(ExpandGeneration());
     }
     
     // Generate a tile at the given position and update the map
@@ -144,7 +145,7 @@ public class GameManager : MonoBehaviour
         if (position.x > 0)
         {
             if (!_TilesToCheckNext.Contains(_map[position.x - 1, position.y]) 
-                && _alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
+                && !_alreadyUpdatedTiles.Contains(_map[position.x - 1, position.y]))
             {
                 _TilesToCheckNext.Add(_map[position.x - 1, position.y]); 
             }
@@ -153,7 +154,7 @@ public class GameManager : MonoBehaviour
         if (position.x < mapSize - 1)
         {
             if (!_TilesToCheckNext.Contains(_map[position.x + 1, position.y])
-                && _alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
+                && !_alreadyUpdatedTiles.Contains(_map[position.x + 1, position.y]))
             {
                 _TilesToCheckNext.Add(_map[position.x + 1, position.y]);
             }
@@ -162,14 +163,14 @@ public class GameManager : MonoBehaviour
         if (position.y > 0)
         {
             if (!_TilesToCheckNext.Contains(_map[position.x, position.y - 1])
-                && _alreadyUpdatedTiles.Contains(_map[position.x, position.y - 1]))
+                && !_alreadyUpdatedTiles.Contains(_map[position.x, position.y - 1]))
             {
                 _TilesToCheckNext.Add(_map[position.x, position.y - 1]);
             }
         }
         if (position.y >= mapSize - 1) return;
         if (!_TilesToCheckNext.Contains(_map[position.x, position.y + 1])
-            && _alreadyUpdatedTiles.Contains(_map[position.x, position.y + 1]))
+            && !_alreadyUpdatedTiles.Contains(_map[position.x, position.y + 1]))
         {
             _TilesToCheckNext.Add(_map[position.x, position.y + 1]);
         }
@@ -236,13 +237,13 @@ public class GameManager : MonoBehaviour
         }
 
         //if there can be only one possibility, the tile is Set To be that possibility
-        if (possibleTiles.Count == 1)
-        {
-            _alreadySetTiles.Add(_map[position.x, position.y]);
-            _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
-            displayMap.SetTile(new Vector3Int(position.x, position.y,0), _map[position.x, position.y].GetTile().tile);
-            
-        }
+        // if (possibleTiles.Count == 1)
+        // {
+        //     _alreadySetTiles.Add(_map[position.x, position.y]);
+        //     _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
+        //     displayMap.SetTile(new Vector3Int(position.x, position.y,0), _map[position.x, position.y].GetTile().tile);
+        //     
+        // }
         return possibleTiles;
     }
     
@@ -274,6 +275,10 @@ public class GameManager : MonoBehaviour
                 if (_map[x,y].IsSet)
                 {
                     displayMap.SetTile(new Vector3Int(position.x, position.y, 0), _map[x,y].GetTile().tile);
+                    if (!_alreadySetTiles.Contains(_map[x,y]))
+                    {
+                        _alreadySetTiles.Add(_map[x,y]);
+                    }
                 }
             }
         }
@@ -319,17 +324,18 @@ public class GameManager : MonoBehaviour
 
     public bool IsAllTilesUpdated()
     {
-        for (int y = 0; y < mapSize; y++)
-        {
-            for (int x = 0; x < mapSize; x++)
-            {
-                if (!_alreadyUpdatedTiles.Contains(_map[x,y]))
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return _alreadyUpdatedTiles.Count == mapSize * mapSize;
+        // for (int y = 0; y < mapSize; y++)
+        // {
+        //     for (int x = 0; x < mapSize; x++)
+        //     {
+        //         if (!_alreadyUpdatedTiles.Contains(_map[x,y]))
+        //         {
+        //             return false;
+        //         }
+        //     }
+        // }
+
     }
 
     //Set the cell clicked on to the tile given in parameters and update the neighbors
@@ -367,8 +373,7 @@ public class GameManager : MonoBehaviour
     private void UpdateNeighborPossibilities(Vector3Int position)
     {
         //Add the current tile to the already updated tile to avoid infinite recursion
-        if (_alreadyUpdatedTiles.Contains(_map[position.x, position.y])) return;
-        _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
+        if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y])) _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
         
         //if the current cell has a tile on the west
         if (position.x > 0)
@@ -388,7 +393,13 @@ public class GameManager : MonoBehaviour
                 
                 //Update the possibilities
                 _map[position.x -1,position.y].UpdatePossibility(possibilities);
+                if (_map[position.x -1,position.y].IsSet)
+                {
+                    _alreadySetTiles.Add(_map[position.x -1,position.y]);
+                    displayMap.SetTile(new Vector3Int(position.x -1,position.y,0), _map[position.x-1, position.y].GetTile().tile);
+                }
                 
+                // _alreadyUpdatedTiles.Add(_map[position.x -1,position.y]);
                 //Update the neighbors of the current cell
                 AddNeighborToCheck(new Vector3Int(position.x -1, position.y));
             }
@@ -414,6 +425,13 @@ public class GameManager : MonoBehaviour
                  //Update the possibilities
                  _map[position.x +1,position.y].UpdatePossibility(possibilities);
                  
+                 if (_map[position.x +1,position.y].IsSet)
+                 {
+                     _alreadySetTiles.Add(_map[position.x +1,position.y]);
+                     displayMap.SetTile(new Vector3Int(position.x +1,position.y,0), _map[position.x+1, position.y].GetTile().tile);
+                 }
+                 
+                 // _alreadyUpdatedTiles.Add(_map[position.x +1,position.y]);
                  //Update the neighbors of the current cell
                  AddNeighborToCheck(new Vector3Int(position.x +1, position.y));
              }
@@ -438,6 +456,13 @@ public class GameManager : MonoBehaviour
                 //Update the possibilities
                 _map[position.x,position.y-1].UpdatePossibility(possibilities);
                 
+                if (_map[position.x ,position.y-1].IsSet)
+                {
+                    _alreadySetTiles.Add(_map[position.x,position.y -1]);
+                    displayMap.SetTile(new Vector3Int(position.x ,position.y-1,0), _map[position.x, position.y-1].GetTile().tile);
+                }
+                
+                // _alreadyUpdatedTiles.Add(_map[position.x,position.y-1]);
                 //Update the neighbors of the current cell
                 AddNeighborToCheck(new Vector3Int(position.x, position.y -1));
             }
@@ -462,6 +487,13 @@ public class GameManager : MonoBehaviour
                 //Update the possibilities
                 _map[position.x,position.y+1].UpdatePossibility(possibilities);
                 
+                if (_map[position.x ,position.y+1].IsSet)
+                {
+                    _alreadySetTiles.Add(_map[position.x,position.y +1]);
+                    displayMap.SetTile(new Vector3Int(position.x ,position.y+1,0), _map[position.x, position.y+1].GetTile().tile);
+                }
+                
+                // _alreadyUpdatedTiles.Add(_map[position.x,position.y+1]);
                 //Update the neighbors of the current cell
                 AddNeighborToCheck(new Vector3Int(position.x, position.y+1));
             }
@@ -552,11 +584,9 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                 if (_TilesToCheck.Count == 0)
-                 {
-                     _TilesToCheck.AddRange(_TilesToCheckNext);
-                     _TilesToCheckNext.Clear();
-                 }
+                _TilesToCheck.AddRange(_TilesToCheckNext);
+                _TilesToCheckNext.Clear();
+                 
                  foreach (var tile in _TilesToCheck)
                  {
                      UpdateNeighborPossibilities(GetTilePosition(tile));
