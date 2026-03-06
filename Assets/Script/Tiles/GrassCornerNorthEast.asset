@@ -32,4 +32,4 @@ MonoBehaviour:
   possibleTilesWest:
   - {fileID: 11400000, guid: 6bd74948ee122f2428aec02560dddb3e, type: 2}
   - {fileID: 11400000, guid: 363b2c41b2571a340a1f109da786883b, type: 2}
-  - {fileID: 11400000, guid: d2be64ec3db264241954416a45f3ffbc, type: 2}
+  - {fileID: 11400000, guid: 5e94db51f744f024fa0331def3de070a, type: 2}

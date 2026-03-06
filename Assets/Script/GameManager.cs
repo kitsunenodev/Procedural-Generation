@@ -136,7 +136,7 @@ public class GameManager : MonoBehaviour
         displayMap.SetTile(new Vector3Int(position.x, position.y,0), _map[position.x, position.y].GetTile().tile);
         _alreadySetTiles.Add( _map[position.x, position.y]);
         _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
-        AddNeighborToCheck(position);
+        UpdateNeighborPossibilities(position);
         if(!_isExpandingMap)StartCoroutine(ExpandGeneration());
     }
     
@@ -373,8 +373,9 @@ public class GameManager : MonoBehaviour
     private void UpdateNeighborPossibilities(Vector3Int position)
     {
         //Add the current tile to the already updated tile to avoid infinite recursion
-        if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y])) _alreadyUpdatedTiles.Add(_map[position.x, position.y]);  
-        
+        if (!_alreadyUpdatedTiles.Contains(_map[position.x, position.y])) _alreadyUpdatedTiles.Add(_map[position.x, position.y]);
+
+        int entropyBeforeUpdate;
         //if the current cell has a tile on the west
         if (position.x > 0)
         {
@@ -390,18 +391,25 @@ public class GameManager : MonoBehaviour
                     //Get all the tile the cell can be after changing the neighbors
                     possibilities = GetPossibleTiles(new Vector3Int(position.x -1, position.y));
                 }
+
+                entropyBeforeUpdate = _map[position.x - 1, position.y].GetEntropy();
                 
                 //Update the possibilities
                 _map[position.x -1,position.y].UpdatePossibility(possibilities);
+                
                 if (_map[position.x -1,position.y].IsSet)
                 {
                     _alreadySetTiles.Add(_map[position.x -1,position.y]);
                     displayMap.SetTile(new Vector3Int(position.x -1,position.y,0), _map[position.x-1, position.y].GetTile().tile);
                 }
-                
+
+                if (entropyBeforeUpdate != _map[position.x - 1, position.y].GetEntropy())
+                {
+                    AddNeighborToCheck(new Vector3Int(position.x -1, position.y));
+                }
                 // _alreadyUpdatedTiles.Add(_map[position.x -1,position.y]);
                 //Update the neighbors of the current cell
-                AddNeighborToCheck(new Vector3Int(position.x -1, position.y));
+                
             }
             
         }
@@ -422,6 +430,7 @@ public class GameManager : MonoBehaviour
                      possibilities = GetPossibleTiles(new Vector3Int(position.x +1, position.y));
                  }
                  
+                 entropyBeforeUpdate = _map[position.x + 1, position.y].GetEntropy();
                  //Update the possibilities
                  _map[position.x +1,position.y].UpdatePossibility(possibilities);
                  
@@ -433,7 +442,11 @@ public class GameManager : MonoBehaviour
                  
                  // _alreadyUpdatedTiles.Add(_map[position.x +1,position.y]);
                  //Update the neighbors of the current cell
-                 AddNeighborToCheck(new Vector3Int(position.x +1, position.y));
+                 if (entropyBeforeUpdate != _map[position.x + 1, position.y].GetEntropy())
+                 {
+                     AddNeighborToCheck(new Vector3Int(position.x +1, position.y));
+                 }
+                 
              }
         }
         
@@ -453,6 +466,7 @@ public class GameManager : MonoBehaviour
                     possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y -1));  
                 }
                 
+                entropyBeforeUpdate = _map[position.x , position.y- 1].GetEntropy();
                 //Update the possibilities
                 _map[position.x,position.y-1].UpdatePossibility(possibilities);
                 
@@ -464,7 +478,11 @@ public class GameManager : MonoBehaviour
                 
                 // _alreadyUpdatedTiles.Add(_map[position.x,position.y-1]);
                 //Update the neighbors of the current cell
-                AddNeighborToCheck(new Vector3Int(position.x, position.y -1));
+                if (entropyBeforeUpdate != _map[position.x, position.y - 1].GetEntropy())
+                {
+                    AddNeighborToCheck(new Vector3Int(position.x, position.y -1));
+                }
+                
             }
         }
         
@@ -484,6 +502,7 @@ public class GameManager : MonoBehaviour
                     possibilities = GetPossibleTiles(new Vector3Int(position.x, position.y+1));
                 }
                 
+                entropyBeforeUpdate = _map[position.x , position.y+ 1].GetEntropy();
                 //Update the possibilities
                 _map[position.x,position.y+1].UpdatePossibility(possibilities);
                 
@@ -495,7 +514,10 @@ public class GameManager : MonoBehaviour
                 
                 // _alreadyUpdatedTiles.Add(_map[position.x,position.y+1]);
                 //Update the neighbors of the current cell
-                AddNeighborToCheck(new Vector3Int(position.x, position.y+1));
+                if (entropyBeforeUpdate != _map[position.x, position.y + 1].GetEntropy())
+                {
+                    AddNeighborToCheck(new Vector3Int(position.x, position.y+1));
+                }
             }
         }
     }
@@ -568,6 +590,7 @@ public class GameManager : MonoBehaviour
         {
             if (_TilesToCheckNext.Count == 0)
             {
+                Debug.Log(_alreadySetTiles.Count);
                 CheckIfMapSet();
                 if (allTileSet)
                 {
