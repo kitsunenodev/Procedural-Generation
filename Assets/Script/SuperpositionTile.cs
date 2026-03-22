@@ -61,7 +61,7 @@ public class SuperpositionTile
         WestPossibilities.Clear();
     }
 
-    public void UpdatePossibility(List<TileSO> possibleTiles)
+    public void UpdatePossibilities(List<TileSO> possibleTiles)
     {
         foreach (var tile in GameManager.Instance.gameTiles)
         {
@@ -105,5 +105,14 @@ public class SuperpositionTile
     {
         return IsSet ? _possibilities[0] : null;
     }
-    
+
+    public bool IsCurrentPossibilityValid(List<TileSO> possibilities)
+    {
+        foreach (var tile in _possibilities)
+        {
+            if (!possibilities.Contains(tile)) return false;
+        }
+
+        return true;
+    }
 }
